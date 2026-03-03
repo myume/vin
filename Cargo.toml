@@ -4,7 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [workspace]
-members = ["vin-parser"]
+members = ["vin-parser", "uinput"]
 resolver = "2"
+
+[workspace.dependencies]
 
 [dependencies]
