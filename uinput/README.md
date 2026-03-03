@@ -1,9 +1,11 @@
-uinput
-======
+# uinput
+
+Forked from https://github.com/meh/rust-uinput
+
 `/dev/uinput` high level wrapper.
 
-Example
--------
+## Example
+
 The following example writes `hello world`.
 
 ```rust
@@ -38,8 +40,8 @@ fn main() {
 }
 ```
 
-Example mouse
--------------
+## Example mouse
+
 ```rust
 extern crate uinput;
 
