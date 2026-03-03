@@ -53,7 +53,7 @@ impl Code for Keyboard {
 }
 
 custom_derive! {
-    #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, IterVariants(KeyVariants), EnumFromStr)]
+    #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug, IterVariants(KeyVariants), EnumFromStr, IterVariantNames(KeyVariantsNames))]
     pub enum Key {
         Reserved,
         Esc,
