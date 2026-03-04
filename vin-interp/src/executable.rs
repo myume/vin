@@ -34,6 +34,14 @@ impl Executable for KeyboardEvent {
                 .device
                 .click(key)
                 .map_err(ExecuteError::DeviceError)?,
+            KeyboardEvent::Send { keys } => {
+                for key in keys {
+                    interp
+                        .device
+                        .click(key)
+                        .map_err(ExecuteError::DeviceError)?
+                }
+            }
         }
 
         Ok(())

@@ -7,3 +7,4 @@ edition = "2024"
 uinput = { path = "../uinput"}
 
 thiserror.workspace = true
+strum.workspace = true

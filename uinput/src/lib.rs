@@ -1,8 +1,9 @@
 #![recursion_limit = "1000"]
 
 extern crate libc;
-extern crate uinput_sys as ffi;
 extern crate nix;
+extern crate strum;
+extern crate uinput_sys as ffi;
 
 #[macro_use]
 extern crate custom_derive;
@@ -28,10 +29,10 @@ pub use device::Device;
 
 /// Open the default uinput device.
 pub fn default() -> Result<device::Builder> {
-	device::Builder::default()
+    device::Builder::default()
 }
 
 /// Open the specified uinput device.
 pub fn open<P: AsRef<Path>>(path: P) -> Result<device::Builder> {
-	device::Builder::open(path)
+    device::Builder::open(path)
 }

@@ -7,6 +7,7 @@ use nix::{self, fcntl, unistd};
 use std::ffi::CString;
 use std::path::Path;
 use std::{mem, slice};
+use strum::IntoEnumIterator;
 use {Device, Event, Result as Res};
 
 #[cfg(feature = "udev")]
@@ -106,7 +107,7 @@ impl Builder {
                 event::Keyboard::All => {
                     let mut builder = self;
 
-                    for item in event::keyboard::Key::iter_variants() {
+                    for item in event::keyboard::Key::iter() {
                         builder = builder.event(item)?;
                     }
 
