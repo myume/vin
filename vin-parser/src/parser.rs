@@ -1,5 +1,6 @@
 use std::str::FromStr;
 
+use thiserror::Error;
 use uinput::event::keyboard::Key;
 
 use crate::grammar::{KEYPRESS, KeyboardEvent, Statement};
@@ -7,22 +8,30 @@ use crate::grammar::{KEYPRESS, KeyboardEvent, Statement};
 #[derive(Default)]
 pub struct Parser {}
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum ParseError {
-    InvalidKey,
-    InvalidKeyboardCommand,
+    #[error("Invalid Key {0}")]
+    InvalidKey(String),
+
+    #[error("Invalid Command {0}")]
+    InvalidKeyboardCommand(String),
+
+    #[error("Missing Keyboard Command")]
     MissingKeyboardCommand,
+
+    #[error("Invalid Statement")]
     InvalidStatement,
 }
 
 impl Parser {
     fn parse_keypress(&self, parts: &[&str]) -> Result<KeyboardEvent, ParseError> {
         if parts.len() != 2 {
-            return Err(ParseError::InvalidKeyboardCommand);
+            return Err(ParseError::MissingKeyboardCommand);
         }
 
         Ok(KeyboardEvent::KeyPress {
-            key: Key::from_str(parts[1]).map_err(|_| ParseError::InvalidKey)?,
+            key: Key::from_str(parts[1])
+                .map_err(|_| ParseError::InvalidKey(parts[1].to_owned()))?,
         })
     }
 
@@ -34,7 +43,7 @@ impl Parser {
 
         match command {
             KEYPRESS => self.parse_keypress(&parts),
-            _ => Err(ParseError::InvalidKeyboardCommand),
+            _ => Err(ParseError::InvalidKeyboardCommand(command.to_owned())),
         }
     }
 
