@@ -1,6 +1,12 @@
-use std::{thread::sleep, time::Duration};
+use std::{
+    error::Error,
+    fs::File,
+    io::{self, BufRead, BufReader},
+    path::Path,
+    thread::sleep,
+    time::Duration,
+};
 
-use thiserror::Error;
 use uinput::Device;
 use vin_parser::parser::{ParseError, Parser};
 
@@ -11,7 +17,7 @@ pub struct Interpreter {
     pub(crate) device: Device,
 }
 
-#[derive(Debug, Error)]
+#[derive(Debug, thiserror::Error)]
 pub enum InterpreterError {
     #[error("Failed to parse statement: {0}")]
     ParseError(#[from] ParseError),
@@ -47,5 +53,33 @@ impl Interpreter {
         let statement = self.parser.parse_statement(line)?;
         statement.execute(self)?;
         Ok(())
+    }
+
+    pub fn run(&mut self, file: &Path) -> Result<(), Box<dyn Error>> {
+        let file = File::open(file)?;
+        let mut reader = BufReader::new(file);
+
+        let mut line = String::new();
+        while reader.read_line(&mut line)? > 0 {
+            self.execute(line.trim_end())?;
+            line.clear();
+        }
+
+        Ok(())
+    }
+
+    pub fn repl(&mut self) -> Result<(), Box<dyn Error>> {
+        eprintln!("Virtual INput Repl");
+
+        let mut line = String::new();
+        loop {
+            eprint!("> ");
+            io::stdin().read_line(&mut line)?;
+            if let Err(e) = self.execute(line.trim_end()) {
+                eprintln!("{e}");
+            };
+
+            line.clear();
+        }
     }
 }
