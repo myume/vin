@@ -1,17 +1,17 @@
-use clap::{Parser, Subcommand};
+use std::{
+    error::Error,
+    io::{self},
+    path::{Path, PathBuf},
+};
+
+use clap::Parser;
 use vin_interp::interpreter::Interpreter;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[command(subcommand)]
-    command: Option<Command>,
-}
-
-#[derive(Subcommand, Debug)]
-enum Command {
-    /// Start a repl
-    Repl,
+    #[arg(short, long)]
+    file: Option<PathBuf>,
 }
 
 fn main() {
@@ -19,20 +19,38 @@ fn main() {
 
     let interpreter = match Interpreter::new() {
         Ok(interpreter) => interpreter,
-        Err(err) => {
-            eprintln!("{err}");
+        Err(e) => {
+            eprintln!("{e}");
             std::process::exit(-1);
         }
     };
 
-    match args.command {
-        Some(command) => match command {
-            Command::Repl => {
-                // run in repl mode
-            }
-        },
-        None => {
-            // default interpreter
-        }
+    let e = match args.file {
+        Some(file) => run(interpreter, &file),
+        None => repl(interpreter),
+    };
+
+    if let Err(e) = e {
+        eprintln!("{e}");
+        std::process::exit(-1);
+    }
+}
+
+fn run(interpreter: Interpreter, file: &Path) -> Result<(), Box<dyn Error>> {
+    todo!()
+}
+
+fn repl(mut interpreter: Interpreter) -> Result<(), Box<dyn Error>> {
+    eprintln!("Virtual INput Repl");
+
+    let mut line = String::new();
+    loop {
+        eprint!("\r> ");
+        io::stdin().read_line(&mut line)?;
+        if let Err(e) = interpreter.execute(line.trim_end()) {
+            eprintln!("{e}");
+        };
+
+        line.clear();
     }
 }

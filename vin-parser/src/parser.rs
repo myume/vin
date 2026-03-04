@@ -41,15 +41,20 @@ impl Parser {
             return Err(ParseError::MissingKeyboardCommand);
         };
 
-        match command {
+        match command.to_uppercase().as_str() {
             KEYPRESS => self.parse_keypress(&parts),
             _ => Err(ParseError::InvalidKeyboardCommand(command.to_owned())),
         }
     }
 
     pub fn parse_statement(&self, s: &str) -> Result<Statement, ParseError> {
-        if let Ok(event) = self.parse_keyboard_event(s) {
-            return Ok(Statement::KeyboardEvent(event));
+        match self.parse_keyboard_event(s) {
+            Ok(event) => return Ok(Statement::KeyboardEvent(event)),
+            Err(e) => {
+                if !matches!(e, ParseError::InvalidKeyboardCommand(_)) {
+                    return Err(e);
+                }
+            }
         }
 
         Err(ParseError::InvalidStatement)
