@@ -1,6 +1,7 @@
 use std::{
     error::Error,
-    io::{self},
+    fs::File,
+    io::{self, BufRead, BufReader},
     path::{Path, PathBuf},
 };
 
@@ -10,7 +11,6 @@ use vin_interp::interpreter::Interpreter;
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    #[arg(short, long)]
     file: Option<PathBuf>,
 }
 
@@ -36,8 +36,17 @@ fn main() {
     }
 }
 
-fn run(interpreter: Interpreter, file: &Path) -> Result<(), Box<dyn Error>> {
-    todo!()
+fn run(mut interpreter: Interpreter, file: &Path) -> Result<(), Box<dyn Error>> {
+    let file = File::open(file)?;
+    let mut reader = BufReader::new(file);
+
+    let mut line = String::new();
+    while reader.read_line(&mut line)? > 0 {
+        interpreter.execute(line.trim_end())?;
+        line.clear();
+    }
+
+    Ok(())
 }
 
 fn repl(mut interpreter: Interpreter) -> Result<(), Box<dyn Error>> {

@@ -18,6 +18,10 @@ impl Executable for Statement {
         match self {
             Statement::KeyboardEvent(keyboard_event) => keyboard_event.execute(interp)?,
         }
+        interp
+            .device
+            .synchronize()
+            .map_err(ExecuteError::DeviceError)?;
 
         Ok(())
     }
