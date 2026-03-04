@@ -1,5 +1,4 @@
 use std::{
-    error::Error,
     fs::File,
     io::{self, BufRead, BufReader},
     path::Path,
@@ -7,6 +6,7 @@ use std::{
     time::Duration,
 };
 
+use anyhow::Context;
 use uinput::Device;
 use vin_parser::parser::{ParseError, Parser};
 
@@ -19,10 +19,10 @@ pub struct Interpreter {
 
 #[derive(Debug, thiserror::Error)]
 pub enum InterpreterError {
-    #[error("Failed to parse statement: {0}")]
+    #[error("Failed to parse statement")]
     ParseError(#[from] ParseError),
 
-    #[error("Failed to execute statement: {0}")]
+    #[error("Failed to execute statement")]
     ExecuteError(#[from] ExecuteError),
 
     #[error("Could create virtual device: {0}")]
@@ -55,28 +55,36 @@ impl Interpreter {
         Ok(())
     }
 
-    pub fn run(&mut self, file: &Path) -> Result<(), Box<dyn Error>> {
+    pub fn run(&mut self, file: &Path) -> anyhow::Result<()> {
         let file = File::open(file)?;
         let mut reader = BufReader::new(file);
 
         let mut line = String::new();
+        let mut i = 0;
         while reader.read_line(&mut line)? > 0 {
-            self.execute(line.trim_end())?;
+            self.execute(line.trim_end())
+                .context(format!("Failed to execute line {i}"))?;
             line.clear();
+
+            i += 1;
         }
 
         Ok(())
     }
 
-    pub fn repl(&mut self) -> Result<(), Box<dyn Error>> {
+    pub fn repl(&mut self) -> anyhow::Result<()> {
         eprintln!("Virtual INput Repl");
 
         let mut line = String::new();
         loop {
             eprint!("> ");
             io::stdin().read_line(&mut line)?;
-            if let Err(e) = self.execute(line.trim_end()) {
-                eprintln!("{e}");
+
+            if let Err(e) = self
+                .execute(line.trim_end())
+                .context("Failed to execute statement")
+            {
+                eprintln!("{e:?}");
             };
 
             line.clear();

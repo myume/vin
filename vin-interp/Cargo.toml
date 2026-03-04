@@ -7,4 +7,5 @@ edition = "2024"
 vin-parser = { path = "../vin-parser"}
 uinput = { path = "../uinput"}
 
+anyhow.workspace = true
 thiserror.workspace = true

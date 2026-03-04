@@ -15,7 +15,7 @@ fn main() {
     let mut interpreter = match Interpreter::new() {
         Ok(interpreter) => interpreter,
         Err(e) => {
-            eprintln!("{e}");
+            eprintln!("{e:?}");
             std::process::exit(-1);
         }
     };
@@ -26,7 +26,7 @@ fn main() {
     };
 
     if let Err(e) = e {
-        eprintln!("{e}");
+        eprintln!("{e:?}");
         std::process::exit(-1);
     }
 }
