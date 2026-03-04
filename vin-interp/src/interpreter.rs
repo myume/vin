@@ -16,32 +16,29 @@ pub enum InterpreterError {
 
     #[error("Failed to execute statement: {0}")]
     ExecuteError(#[from] ExecuteError),
+
+    #[error("Could create virtual device: {0}")]
+    DeviceInit(uinput::Error),
 }
 
 impl Interpreter {
-    pub fn new() -> Self {
-        Interpreter {
+    pub fn new() -> Result<Self, InterpreterError> {
+        Ok(Interpreter {
             parser: Parser::default(),
             device: uinput::default()
-                .unwrap()
+                .map_err(InterpreterError::DeviceInit)?
                 .name("vin_device")
-                .unwrap()
+                .map_err(InterpreterError::DeviceInit)?
                 .event(uinput::event::Keyboard::All)
-                .unwrap()
+                .map_err(InterpreterError::DeviceInit)?
                 .create()
-                .unwrap(),
-        }
+                .map_err(InterpreterError::DeviceInit)?,
+        })
     }
 
     pub fn execute(&mut self, line: &str) -> Result<(), InterpreterError> {
         let statement = self.parser.parse_statement(line)?;
         statement.execute(self)?;
         Ok(())
-    }
-}
-
-impl Default for Interpreter {
-    fn default() -> Self {
-        Self::new()
     }
 }

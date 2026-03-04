@@ -22,5 +22,5 @@ optional = true
 version  = "0.2"
 
 [features]
-default = ["udev"]
+# default = ["udev"]
 udev    = ["libudev"]

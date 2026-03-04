@@ -7,8 +7,10 @@ use nix::{self, fcntl, unistd};
 use std::ffi::CString;
 use std::path::Path;
 use std::{mem, slice};
-use {Device, Error, Event, Result as Res};
+use {Device, Event, Result as Res};
 
+#[cfg(feature = "udev")]
+use Error;
 #[cfg(feature = "udev")]
 use udev;
 
