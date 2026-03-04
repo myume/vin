@@ -54,7 +54,7 @@ fn repl(mut interpreter: Interpreter) -> Result<(), Box<dyn Error>> {
 
     let mut line = String::new();
     loop {
-        eprint!("\r> ");
+        eprint!("> ");
         io::stdin().read_line(&mut line)?;
         if let Err(e) = interpreter.execute(line.trim_end()) {
             eprintln!("{e}");

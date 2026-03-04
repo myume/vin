@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use thiserror::Error;
 use uinput::Device;
 use vin_parser::parser::{ParseError, Parser};
@@ -23,16 +25,21 @@ pub enum InterpreterError {
 
 impl Interpreter {
     pub fn new() -> Result<Self, InterpreterError> {
+        let device = uinput::default()
+            .map_err(InterpreterError::DeviceInit)?
+            .name("vin_device")
+            .map_err(InterpreterError::DeviceInit)?
+            .event(uinput::event::Keyboard::All)
+            .map_err(InterpreterError::DeviceInit)?
+            .create()
+            .map_err(InterpreterError::DeviceInit)?;
+
+        // unsure why i need to sleep. probably has something to do with setting up the device
+        sleep(Duration::from_secs(1));
+
         Ok(Interpreter {
             parser: Parser::default(),
-            device: uinput::default()
-                .map_err(InterpreterError::DeviceInit)?
-                .name("vin_device")
-                .map_err(InterpreterError::DeviceInit)?
-                .event(uinput::event::Keyboard::All)
-                .map_err(InterpreterError::DeviceInit)?
-                .create()
-                .map_err(InterpreterError::DeviceInit)?,
+            device,
         })
     }
 
