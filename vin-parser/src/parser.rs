@@ -10,10 +10,10 @@ pub struct Parser {}
 
 #[derive(Debug, Error)]
 pub enum ParseError {
-    #[error("Invalid Key {0}")]
+    #[error("Invalid Key \"{0}\"")]
     InvalidKey(String),
 
-    #[error("Invalid Command {0}")]
+    #[error("Invalid Command \"{0}\"")]
     InvalidKeyboardCommand(String),
 
     #[error("Missing Keyboard Command")]
@@ -25,8 +25,12 @@ pub enum ParseError {
 
 impl Parser {
     fn parse_keypress(&self, parts: &[&str]) -> Result<KeyboardEvent, ParseError> {
-        if parts.len() != 2 {
+        if parts.len() < 2 {
             return Err(ParseError::MissingKeyboardCommand);
+        }
+
+        if parts.len() > 2 {
+            return Err(ParseError::InvalidKey(parts[1..].join(" ")));
         }
 
         Ok(KeyboardEvent::KeyPress {
