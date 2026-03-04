@@ -78,7 +78,10 @@ impl Interpreter {
         let mut line = String::new();
         loop {
             eprint!("> ");
-            io::stdin().read_line(&mut line)?;
+            if io::stdin().read_line(&mut line)? == 0 {
+                eprintln!();
+                break;
+            };
 
             if let Err(e) = self
                 .execute(line.trim_end())
@@ -89,5 +92,6 @@ impl Interpreter {
 
             line.clear();
         }
+        Ok(())
     }
 }
