@@ -27,7 +27,7 @@ pub enum ParseError {
 }
 
 impl Parser {
-    fn parse_keypress(&self, parts: &[&str]) -> Result<KeyboardEvent, ParseError> {
+    fn parse_key(&self, parts: &[&str]) -> Result<Key, ParseError> {
         if parts.len() < 2 {
             return Err(ParseError::MissingKeyboardCommand);
         }
@@ -36,10 +36,7 @@ impl Parser {
             return Err(ParseError::InvalidKey(parts[1..].join(" ")));
         }
 
-        Ok(KeyboardEvent::KeyPress {
-            key: Key::from_str(parts[1])
-                .map_err(|_| ParseError::InvalidKey(parts[1].to_owned()))?,
-        })
+        Key::from_str(parts[1]).map_err(|_| ParseError::InvalidKey(parts[1].to_owned()))
     }
 
     fn parse_send(&self, message: &str) -> Result<KeyboardEvent, ParseError> {
@@ -61,8 +58,16 @@ impl Parser {
 
         match KeyboardCommands::from_str(command.to_uppercase().as_str()) {
             Ok(command) => match command {
-                KeyboardCommands::KeyPress => self.parse_keypress(&parts),
+                KeyboardCommands::KeyPress => Ok(KeyboardEvent::KeyPress {
+                    key: self.parse_key(&parts)?,
+                }),
                 KeyboardCommands::Send => self.parse_send(&parts[1..].join(" ")),
+                KeyboardCommands::Hold => Ok(KeyboardEvent::Hold {
+                    key: self.parse_key(&parts)?,
+                }),
+                KeyboardCommands::Release => Ok(KeyboardEvent::Release {
+                    key: self.parse_key(&parts)?,
+                }),
             },
             Err(_) => Err(ParseError::InvalidKeyboardCommand(command.to_owned())),
         }
@@ -87,11 +92,32 @@ mod tests {
     #[test]
     fn test_parse_keypress() {
         for key in Key::iter() {
-            let statement = format!("PRESS {}", key);
+            let statement = format!("{} {}", KeyboardCommands::KeyPress, key);
             let res = Parser::default().parse_statement(&statement).unwrap();
             assert_eq!(
                 res,
                 Statement::KeyboardEvent(KeyboardEvent::KeyPress { key })
+            )
+        }
+    }
+
+    #[test]
+    fn test_parse_hold() {
+        for key in Key::iter() {
+            let statement = format!("{} {}", KeyboardCommands::Hold, key);
+            let res = Parser::default().parse_statement(&statement).unwrap();
+            assert_eq!(res, Statement::KeyboardEvent(KeyboardEvent::Hold { key }))
+        }
+    }
+
+    #[test]
+    fn test_parse_release() {
+        for key in Key::iter() {
+            let statement = format!("{} {}", KeyboardCommands::Release, key);
+            let res = Parser::default().parse_statement(&statement).unwrap();
+            assert_eq!(
+                res,
+                Statement::KeyboardEvent(KeyboardEvent::Release { key })
             )
         }
     }

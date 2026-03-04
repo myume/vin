@@ -42,6 +42,14 @@ impl Executable for KeyboardEvent {
                         .map_err(ExecuteError::DeviceError)?
                 }
             }
+            KeyboardEvent::Hold { key } => interp
+                .device
+                .press(key)
+                .map_err(ExecuteError::DeviceError)?,
+            KeyboardEvent::Release { key } => interp
+                .device
+                .release(key)
+                .map_err(ExecuteError::DeviceError)?,
         }
 
         Ok(())
