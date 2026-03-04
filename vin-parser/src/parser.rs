@@ -70,15 +70,11 @@ impl Parser {
 
     pub fn parse_statement(&self, s: &str) -> Result<Statement, ParseError> {
         match self.parse_keyboard_event(s) {
-            Ok(event) => return Ok(Statement::KeyboardEvent(event)),
-            Err(e) => {
-                if !matches!(e, ParseError::InvalidKeyboardCommand(_)) {
-                    return Err(e);
-                }
-            }
+            Ok(event) => Ok(Statement::KeyboardEvent(event)),
+            Err(e) => Err(e),
         }
 
-        Err(ParseError::InvalidStatement)
+        // Err(ParseError::InvalidStatement)
     }
 }
 

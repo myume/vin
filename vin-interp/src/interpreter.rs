@@ -62,11 +62,16 @@ impl Interpreter {
         let mut line = String::new();
         let mut i = 0;
         while reader.read_line(&mut line)? > 0 {
+            i += 1;
+
+            if line.trim().is_empty() {
+                line.clear();
+                continue;
+            }
+
             self.execute(line.trim_end())
                 .context(format!("Failed to execute line {i}"))?;
             line.clear();
-
-            i += 1;
         }
 
         Ok(())
