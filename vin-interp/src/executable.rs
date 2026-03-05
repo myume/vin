@@ -1,3 +1,5 @@
+use std::{thread::sleep, time::Duration};
+
 use thiserror::Error;
 use vin_parser::grammar::{KeyboardEvent, Repeat, Statement};
 
@@ -58,7 +60,11 @@ impl Executable for Repeat {
     fn execute(&self, interp: &mut Interpreter) -> Result<(), ExecuteError> {
         for _ in 0..self.times {
             for statement in self.body.iter() {
-                statement.execute(interp)?
+                statement.execute(interp)?;
+
+                // for some reason writing rapidly to uinput causes incomplete outputs
+                // sleep somehow fixes it, seems like some sort of weird race condition
+                sleep(Duration::from_millis(1));
             }
         }
 
