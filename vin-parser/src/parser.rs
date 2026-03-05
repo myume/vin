@@ -3,7 +3,10 @@ use std::str::FromStr;
 use thiserror::Error;
 use uinput::event::keyboard::Key;
 
-use crate::grammar::{KeyboardCommands, KeyboardEvent, Statement};
+use crate::grammar::{
+    KeyboardCommands, KeyboardEvent, REPEAT_COMMAND, REPEAT_OPEN, REPEAT_TERMINATOR, Repeat,
+    Statement,
+};
 
 #[derive(Default)]
 pub struct Parser {}
@@ -12,6 +15,12 @@ pub struct Parser {}
 pub enum ParseError {
     #[error("Invalid send command: {0}")]
     InvalidSend(String),
+
+    #[error("Invalid repeat command")]
+    InvalidRepeat,
+
+    #[error("Bad repeat instruction: {0}")]
+    BadRepeat(String),
 
     #[error("Invalid Key \"{0}\"")]
     InvalidKey(String),
@@ -22,8 +31,11 @@ pub enum ParseError {
     #[error("Missing Keyboard Command")]
     MissingKeyboardCommand,
 
-    #[error("Invalid Statement")]
-    InvalidStatement,
+    #[error("Incomplete repeat statement")]
+    IncompleteStatement,
+
+    #[error("Invalid Statement \"{0}\"")]
+    InvalidStatement(String),
 }
 
 impl Parser {
@@ -73,13 +85,71 @@ impl Parser {
         }
     }
 
-    pub fn parse_statement(&self, s: &str) -> Result<Statement, ParseError> {
-        match self.parse_keyboard_event(s) {
-            Ok(event) => Ok(Statement::KeyboardEvent(event)),
-            Err(e) => Err(e),
+    fn parse_repeat(&self, s: &str) -> Result<Repeat, ParseError> {
+        let mut lines = s.lines();
+        let Some(repeat_start) = lines.next() else {
+            return Err(ParseError::InvalidRepeat);
+        };
+
+        let parts: Vec<&str> = repeat_start.split(" ").collect();
+        if parts.len() < 2 || parts.len() > 3 || parts[0].to_uppercase() != REPEAT_COMMAND {
+            return Err(ParseError::InvalidRepeat);
         }
 
-        // Err(ParseError::InvalidStatement)
+        if parts.last() != Some(&REPEAT_OPEN) {
+            return Err(ParseError::BadRepeat(
+                "Missing open brace on repeat".to_string(),
+            ));
+        }
+
+        let times: Option<u32> = if parts.len() == 3 {
+            Some(parts[1].parse().map_err(|_| {
+                ParseError::BadRepeat(format!("Invalid number of repetitions: \"{}\"", parts[1]))
+            })?)
+        } else {
+            None
+        };
+
+        let mut repeat = Repeat {
+            times,
+            body: Vec::new(),
+        };
+
+        for line in lines {
+            let line = line.trim();
+            if line == REPEAT_TERMINATOR {
+                return Ok(repeat);
+            }
+
+            let statement = self.parse_statement(line)?;
+            repeat.body.push(statement);
+        }
+
+        Err(ParseError::IncompleteStatement)
+    }
+
+    pub fn parse_statement(&self, s: &str) -> Result<Statement, ParseError> {
+        match self.parse_repeat(s) {
+            Ok(repeat) => return Ok(Statement::Repeat(repeat)),
+            Err(e) => {
+                if !matches!(e, ParseError::InvalidRepeat) {
+                    return Err(e);
+                }
+            }
+        }
+
+        match self.parse_keyboard_event(s) {
+            Ok(event) => return Ok(Statement::KeyboardEvent(event)),
+            Err(e) => {
+                if !matches!(e, ParseError::MissingKeyboardCommand)
+                    || !matches!(e, ParseError::InvalidKeyboardCommand(_))
+                {
+                    return Err(e);
+                }
+            }
+        };
+
+        Err(ParseError::InvalidStatement(s.to_owned()))
     }
 }
 
@@ -140,5 +210,59 @@ mod tests {
             Key::D,
         ];
         assert_eq!(res, Statement::KeyboardEvent(KeyboardEvent::Send { keys }))
+    }
+
+    #[test]
+    fn test_parse_repeat() {
+        let statement = "REPEAT 10 {\n\tSEND hello world\n}";
+        let res = Parser::default().parse_statement(statement).unwrap();
+        let keys = vec![
+            Key::H,
+            Key::E,
+            Key::L,
+            Key::L,
+            Key::O,
+            Key::Space,
+            Key::W,
+            Key::O,
+            Key::R,
+            Key::L,
+            Key::D,
+        ];
+        let send = Statement::KeyboardEvent(KeyboardEvent::Send { keys });
+        assert_eq!(
+            res,
+            Statement::Repeat(Repeat {
+                times: Some(10),
+                body: vec![send]
+            })
+        )
+    }
+
+    #[test]
+    fn test_parse_repeat_forever() {
+        let statement = "REPEAT {\n\tSEND hello world\n}";
+        let res = Parser::default().parse_statement(statement).unwrap();
+        let keys = vec![
+            Key::H,
+            Key::E,
+            Key::L,
+            Key::L,
+            Key::O,
+            Key::Space,
+            Key::W,
+            Key::O,
+            Key::R,
+            Key::L,
+            Key::D,
+        ];
+        let send = Statement::KeyboardEvent(KeyboardEvent::Send { keys });
+        assert_eq!(
+            res,
+            Statement::Repeat(Repeat {
+                times: None,
+                body: vec![send]
+            })
+        )
     }
 }

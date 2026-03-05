@@ -1,5 +1,5 @@
 use thiserror::Error;
-use vin_parser::grammar::{KeyboardEvent, Statement};
+use vin_parser::grammar::{KeyboardEvent, Repeat, Statement};
 
 use crate::interpreter::Interpreter;
 
@@ -17,6 +17,7 @@ impl Executable for Statement {
     fn execute(&self, interp: &mut Interpreter) -> Result<(), ExecuteError> {
         match self {
             Statement::KeyboardEvent(keyboard_event) => keyboard_event.execute(interp)?,
+            Statement::Repeat(repeat) => repeat.execute(interp)?,
         }
         interp
             .device
@@ -50,6 +51,27 @@ impl Executable for KeyboardEvent {
                 .device
                 .release(key)
                 .map_err(ExecuteError::DeviceError)?,
+        }
+
+        Ok(())
+    }
+}
+
+impl Executable for Repeat {
+    fn execute(&self, interp: &mut Interpreter) -> Result<(), ExecuteError> {
+        match self.times {
+            Some(times) => {
+                for _ in 0..times {
+                    for statement in self.body.iter() {
+                        statement.execute(interp)?
+                    }
+                }
+            }
+            None => loop {
+                for statement in self.body.iter() {
+                    statement.execute(interp)?
+                }
+            },
         }
 
         Ok(())
