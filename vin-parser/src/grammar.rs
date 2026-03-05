@@ -35,6 +35,6 @@ pub enum KeyboardEvent {
 
 #[derive(Debug, PartialEq)]
 pub struct Repeat {
-    pub times: Option<u32>,
+    pub times: u32,
     pub body: Vec<Statement>,
 }

@@ -92,7 +92,7 @@ impl Parser {
         };
 
         let parts: Vec<&str> = repeat_start.split(" ").collect();
-        if parts.len() < 2 || parts.len() > 3 || parts[0].to_uppercase() != REPEAT_COMMAND {
+        if !parts.is_empty() && parts[0].to_uppercase() != REPEAT_COMMAND {
             return Err(ParseError::InvalidRepeat);
         }
 
@@ -102,16 +102,16 @@ impl Parser {
             ));
         }
 
-        let times: Option<u32> = if parts.len() == 3 {
-            Some(parts[1].parse().map_err(|_| {
-                ParseError::BadRepeat(format!("Invalid number of repetitions: \"{}\"", parts[1]))
-            })?)
-        } else {
-            None
-        };
+        if parts.len() != 3 {
+            return Err(ParseError::BadRepeat(
+                "Repeat command must have repetition count".to_string(),
+            ));
+        }
 
         let mut repeat = Repeat {
-            times,
+            times: parts[1].parse().map_err(|_| {
+                ParseError::BadRepeat(format!("Invalid number of repetitions: \"{}\"", parts[1]))
+            })?,
             body: Vec::new(),
         };
 
@@ -238,7 +238,7 @@ mod tests {
         assert_eq!(
             res,
             Statement::Repeat(Repeat {
-                times: Some(10),
+                times: 10,
                 body: vec![send]
             })
         )
@@ -247,27 +247,7 @@ mod tests {
     #[test]
     fn test_parse_repeat_forever() {
         let statement = "REPEAT {\n\tSEND hello world\n}";
-        let res = Parser::default().parse_statement(statement).unwrap();
-        let keys = vec![
-            Key::H,
-            Key::E,
-            Key::L,
-            Key::L,
-            Key::O,
-            Key::Space,
-            Key::W,
-            Key::O,
-            Key::R,
-            Key::L,
-            Key::D,
-        ];
-        let send = Statement::KeyboardEvent(KeyboardEvent::Send { keys });
-        assert_eq!(
-            res,
-            Statement::Repeat(Repeat {
-                times: None,
-                body: vec![send]
-            })
-        )
+        let e = Parser::default().parse_statement(statement);
+        assert!(e.is_err())
     }
 }

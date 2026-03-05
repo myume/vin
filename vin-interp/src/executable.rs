@@ -56,19 +56,10 @@ impl Executable for KeyboardEvent {
 
 impl Executable for Repeat {
     fn execute(&self, interp: &mut Interpreter) -> Result<(), ExecuteError> {
-        match self.times {
-            Some(times) => {
-                for _ in 0..times {
-                    for statement in self.body.iter() {
-                        statement.execute(interp)?
-                    }
-                }
+        for _ in 0..self.times {
+            for statement in self.body.iter() {
+                statement.execute(interp)?
             }
-            None => loop {
-                for statement in self.body.iter() {
-                    statement.execute(interp)?
-                }
-            },
         }
 
         Ok(())
