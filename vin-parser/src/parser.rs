@@ -91,12 +91,12 @@ impl Parser {
             return Err(ParseError::InvalidRepeat);
         };
 
-        let parts: Vec<&str> = repeat_start.split(" ").collect();
+        let parts: Vec<&str> = repeat_start.trim().split(" ").collect();
         if !parts.is_empty() && parts[0].to_uppercase() != REPEAT_COMMAND {
             return Err(ParseError::InvalidRepeat);
         }
 
-        if parts.last() != Some(&REPEAT_OPEN) {
+        if parts.last().map(|part| part.trim()) != Some(REPEAT_OPEN) {
             return Err(ParseError::BadRepeat(
                 "Missing open brace on repeat".to_string(),
             ));
@@ -115,14 +115,22 @@ impl Parser {
             body: Vec::new(),
         };
 
+        let mut partial_statement = String::new();
         for line in lines {
-            let line = line.trim();
-            if line == REPEAT_TERMINATOR {
+            partial_statement += line.trim();
+            if partial_statement.trim() == REPEAT_TERMINATOR {
                 return Ok(repeat);
             }
+            match self.parse_statement(&partial_statement) {
+                Ok(statement) => repeat.body.push(statement),
+                Err(ParseError::IncompleteStatement) => {
+                    partial_statement += "\n";
+                    continue;
+                }
+                Err(e) => return Err(e),
+            }
 
-            let statement = self.parse_statement(line)?;
-            repeat.body.push(statement);
+            partial_statement.clear();
         }
 
         Err(ParseError::IncompleteStatement)
@@ -249,5 +257,27 @@ mod tests {
         let statement = "REPEAT {\n\tSEND hello world\n}";
         let e = Parser::default().parse_statement(statement);
         assert!(e.is_err())
+    }
+
+    #[test]
+    fn test_nested_repeats() {
+        let statement = "REPEAT 10 {
+            REPEAT 10 {
+                PRESS K
+            }
+        }";
+        let res = Parser::default().parse_statement(statement).unwrap();
+        assert_eq!(
+            res,
+            Statement::Repeat(Repeat {
+                times: 10,
+                body: vec![Statement::Repeat(Repeat {
+                    times: 10,
+                    body: vec![Statement::KeyboardEvent(KeyboardEvent::KeyPress {
+                        key: Key::K
+                    })]
+                })]
+            })
+        );
     }
 }
