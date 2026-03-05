@@ -131,22 +131,22 @@ impl Parser {
     pub fn parse_statement(&self, s: &str) -> Result<Statement, ParseError> {
         match self.parse_repeat(s) {
             Ok(repeat) => return Ok(Statement::Repeat(repeat)),
-            Err(e) => {
-                if !matches!(e, ParseError::InvalidRepeat) {
-                    return Err(e);
-                }
+            Err(ParseError::InvalidRepeat) => {
+                // attempt to parse the next statement type
             }
+            Err(e) => return Err(e),
         }
 
         match self.parse_keyboard_event(s) {
             Ok(event) => return Ok(Statement::KeyboardEvent(event)),
-            Err(e) => {
-                if !matches!(e, ParseError::MissingKeyboardCommand)
-                    || !matches!(e, ParseError::InvalidKeyboardCommand(_))
-                {
+            Err(e) => match e {
+                ParseError::InvalidKeyboardCommand(_) => {
+                    // could be another type of command
+                }
+                _ => {
                     return Err(e);
                 }
-            }
+            },
         };
 
         Err(ParseError::InvalidStatement(s.to_owned()))

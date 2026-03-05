@@ -49,12 +49,6 @@ impl Interpreter {
         })
     }
 
-    pub fn execute(&mut self, line: &str) -> Result<(), InterpreterError> {
-        let statement = self.parser.parse_statement(line)?;
-        statement.execute(self)?;
-        Ok(())
-    }
-
     pub fn run(&mut self, file: &Path) -> anyhow::Result<()> {
         let file = File::open(file)?;
         let mut reader = BufReader::new(file);
@@ -67,10 +61,18 @@ impl Interpreter {
             if line.trim().is_empty() {
                 line.clear();
                 continue;
+            };
+
+            match self.parser.parse_statement(line.trim()) {
+                Ok(statement) => statement
+                    .execute(self)
+                    .context(format!("Failed to execute line {i}"))?,
+                Err(ParseError::IncompleteStatement) => {
+                    continue;
+                }
+                Err(e) => return Err(e.into()),
             }
 
-            self.execute(line.trim_end())
-                .context(format!("Failed to execute line {i}"))?;
             line.clear();
         }
 
@@ -88,12 +90,20 @@ impl Interpreter {
                 break;
             };
 
-            if let Err(e) = self
-                .execute(line.trim_end())
-                .context("Failed to execute statement")
-            {
-                eprintln!("{e:?}");
-            };
+            match self.parser.parse_statement(line.trim()) {
+                Ok(statement) => {
+                    if let Err(e) = statement
+                        .execute(self)
+                        .context("Failed to execute statement")
+                    {
+                        eprintln!("{e:?}");
+                    };
+                }
+                Err(ParseError::IncompleteStatement) => {
+                    continue;
+                }
+                Err(e) => eprintln!("{e}"),
+            }
 
             line.clear();
         }
