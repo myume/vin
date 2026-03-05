@@ -18,6 +18,7 @@ impl Executable for Statement {
         match self {
             Statement::KeyboardEvent(keyboard_event) => keyboard_event.execute(interp)?,
             Statement::Repeat(repeat) => repeat.execute(interp)?,
+            Statement::NOOP => return Ok(()),
         }
         interp
             .device

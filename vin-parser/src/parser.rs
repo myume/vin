@@ -129,6 +129,11 @@ impl Parser {
     }
 
     pub fn parse_statement(&self, s: &str) -> Result<Statement, ParseError> {
+        let s = s.trim();
+        if s.is_empty() {
+            return Ok(Statement::NOOP);
+        }
+
         match self.parse_repeat(s) {
             Ok(repeat) => return Ok(Statement::Repeat(repeat)),
             Err(ParseError::InvalidRepeat) => {
@@ -141,7 +146,7 @@ impl Parser {
             Ok(event) => return Ok(Statement::KeyboardEvent(event)),
             Err(e) => match e {
                 ParseError::InvalidKeyboardCommand(_) => {
-                    // could be another type of command
+                    // attempt to parse the next statement type
                 }
                 _ => {
                     return Err(e);

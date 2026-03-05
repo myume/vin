@@ -58,12 +58,7 @@ impl Interpreter {
         while reader.read_line(&mut line)? > 0 {
             i += 1;
 
-            if line.trim().is_empty() {
-                line.clear();
-                continue;
-            };
-
-            match self.parser.parse_statement(line.trim()) {
+            match self.parser.parse_statement(&line) {
                 Ok(statement) => statement
                     .execute(self)
                     .context(format!("Failed to execute line {i}"))?,
@@ -90,7 +85,7 @@ impl Interpreter {
                 break;
             };
 
-            match self.parser.parse_statement(line.trim()) {
+            match self.parser.parse_statement(&line) {
                 Ok(statement) => {
                     if let Err(e) = statement
                         .execute(self)

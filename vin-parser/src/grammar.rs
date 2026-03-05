@@ -9,6 +9,7 @@ pub const REPEAT_COMMAND: &str = "REPEAT";
 pub enum Statement {
     KeyboardEvent(KeyboardEvent),
     Repeat(Repeat),
+    NOOP,
 }
 
 #[derive(Debug, Display, EnumString)]
