@@ -16,11 +16,13 @@ SEND hello world
 PRESS ENTER
 ```
 
+See the [examples](examples) folder for more examples.
+
 ## Permissions
 
 The interpreter needs access to the `/dev/uinput` file. You can acheive this in
-multiple ways. The easiest is to run the interpreter with `sudo`. You can also
-create a new group and give permissions like that.
+multiple ways. The easiest is to run the interpreter with `sudo`. Alternatively,
+you can create a new group and give permissions like that.
 
 ## Compatability
 

@@ -2,4 +2,4 @@ target/
 result
 .direnv/
 
-*.vin
+test.vin

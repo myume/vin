@@ -1,0 +1,9 @@
+REPEAT 10 {
+    REPEAT 10 {
+        SEND inner
+        PRESS Space
+    }
+    SEND outer
+    PRESS Space
+}
+SEND finished
