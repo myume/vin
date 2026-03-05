@@ -22,6 +22,10 @@ impl Executable for Statement {
             Statement::Repeat(repeat) => repeat.execute(interp)?,
             Statement::NOOP => return Ok(()),
         }
+        interp
+            .device
+            .synchronize()
+            .map_err(ExecuteError::DeviceError)?;
 
         Ok(())
     }

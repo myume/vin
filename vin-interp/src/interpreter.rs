@@ -68,10 +68,6 @@ impl Interpreter {
                 Err(e) => return Err(e.into()),
             }
 
-            self.device
-                .synchronize()
-                .map_err(ExecuteError::DeviceError)?;
-
             line.clear();
         }
 
@@ -103,10 +99,6 @@ impl Interpreter {
                 }
                 Err(e) => eprintln!("{e}"),
             }
-
-            self.device
-                .synchronize()
-                .map_err(ExecuteError::DeviceError)?;
 
             line.clear();
         }
