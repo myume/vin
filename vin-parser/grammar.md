@@ -5,7 +5,7 @@ Pretty simple for now. Just a sequence of keyboard inputs
 ```grammar
 PROGRAM ::= STATEMENT*
 
-STATEMENT ::= (KEYBOARD_COMMAND) NEWLINE
+STATEMENT ::= (KEYBOARD_COMMAND | REPEAT_LOOP) NEWLINE
 
 REPEAT_LOOP ::= "REPEAT" NUMBER "{" NEWLINE STATEMENT* "}"
 
